@@ -183,7 +183,8 @@ int main()
    //generate texture
    GLuint texture = load_texture_from_file("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\test_img_small.bmp");
 
-   ev10::eIIe::shader shader("shader.glsl", "color.frag");
+   //TODO - find a better way to reference these files paths.
+   ev10::eIIe::shader shader("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\shader.glsl", "C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\color.frag");
    GLuint shader_program = shader.get_program();
 
    GLuint VAO, VBO;
