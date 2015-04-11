@@ -20,6 +20,7 @@
 #include <thread>
 #include <sstream>
 
+#include <CImg.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -98,9 +99,12 @@ std::string retrieve_file_name()
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-/*
+
 GLuint load_texture_from_file(std::string filename)
 {
+   //define return variable
+   GLuint texture = -1;
+
    //strip extension
    std::string extension;
    int delimiter_index = filename.find_last_of('.');
@@ -112,20 +116,30 @@ GLuint load_texture_from_file(std::string filename)
       //convert to uppercase
       std::transform(extension.begin(), extension.end(), extension.begin(), ::toupper);
       //get c_string
-      const char* ext = extension.c_str;
+      const char* ext = extension.c_str();
       //check filetype
       if (strcmp(ext, "JPG") || strcmp(ext, "BMP") || strcmp(ext, "PNG"))
       {
-         //load .jpg
-         GLuint tex_2D = SOIL_load_OGL_texture(filename.c_str, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID,
-                                               SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y |
-                                               SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT);
-         if (tex_2D == 0)
+         //make the texture
+         glGenTextures(1, &texture);
+         
+         //bind the texture
+         glBindTexture(GL_TEXTURE_2D, texture);
+
+         //load .jpg using Cimg
+         cimg_library::CImg<unsigned char> src(filename.c_str());
+         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, src.width(), src.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, src.data());
+         glGenerateMipmap(GL_TEXTURE_2D);
+
+         //free the CImg
+         glBindTexture(GL_TEXTURE_2D, 0);
+
+         if (texture == -1)
          {
             //THERE WAS AN ERROR - do something
          }
          else
-            return tex_2D;
+            return texture;
       }
       else
       {
@@ -136,7 +150,7 @@ GLuint load_texture_from_file(std::string filename)
    }
 
    return NULL;
-}*/
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
