@@ -149,7 +149,7 @@ GLuint load_texture_from_file(std::string filename)
       }
    }
 
-   return NULL;
+   return texture;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -179,6 +179,9 @@ int main()
    add_call_backs(glfw, window);
 
    set_up_glew(WIDTH, HEIGHT);
+
+   //generate texture
+   GLuint texture = load_texture_from_file("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\test_img_small.bmp");
 
    ev10::eIIe::shader shader("shader.glsl", "color.frag");
    GLuint shader_program = shader.get_program();
