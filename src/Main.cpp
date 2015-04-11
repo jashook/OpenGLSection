@@ -221,18 +221,34 @@ int main()
 
       shader.use_program();
 
-      unsigned char direction = 0;
+      char* shift_distance_string = "ffff";
 
       {
          std::lock_guard<std::mutex> lock(g_lock);
 
          if (!g_ring_buffer.empty())
          {
-            direction = g_ring_buffer.pop();
+            shift_distance_string = g_ring_buffer.pop();
          }
       }
 
-      if (direction > 251 && direction < 256)
+      //respond to shift_distance
+      if (!(std::strcmp(shift_distance_string, "ffff") == 0))
+      {
+         float delta = std::atof(shift_distance_string);
+
+         g_location[0] += delta;
+
+         glm::mat4 transform;
+         transform = glm::translate(transform, glm::vec3(g_location[0], g_location[1], 0.0f));
+
+         GLint transform_location = glGetUniformLocation(shader.get_program(), "transform");
+         glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(transform));
+
+         shift_distance_string = "ffff";
+      }
+
+      /*if (shift_distance_string > 251 && direction < 256)
       {
          g_keys[direction] = true;
       }
@@ -291,7 +307,7 @@ int main()
          glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(transform));
 
          g_keys[253] = false;
-      }
+      }*/
 
       else
       {
