@@ -171,7 +171,7 @@ int main()
       {
          std::lock_guard<std::mutex> lock(g_lock);
 
-         g_ring_buffer.push(new std::string(input.begin(), input.end());
+         g_ring_buffer.push(new std::string(input.begin(), input.end()));
       });
 
          server->start();
