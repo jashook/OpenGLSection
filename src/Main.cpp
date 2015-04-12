@@ -17,6 +17,7 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <sstream>
 
@@ -55,7 +56,7 @@ float g_location[2] = { 0.0 };
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-ev10::eIIe::ring_buffer<char, 1024> g_ring_buffer;
+ev10::eIIe::ring_buffer<std::string*, 1024> g_ring_buffer;
 std::mutex g_lock;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -170,16 +171,15 @@ int main()
       {
          std::lock_guard<std::mutex> lock(g_lock);
 
-         g_ring_buffer.push(input.back());
+         g_ring_buffer.push(new std::string(input.begin(), input.end());
       });
 
-      server->start();
+         server->start();
    });
 
    add_call_backs(glfw, window);
 
    set_up_glew(WIDTH, HEIGHT);
-
    //generate texture
    GLuint texture = load_texture_from_file("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\test_img_small.bmp");
 
@@ -204,7 +204,7 @@ int main()
    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
    glEnableVertexAttribArray(0);
 
-   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 
+   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3
       * sizeof(GLfloat)));
    glEnableVertexAttribArray(1);
 
@@ -224,36 +224,37 @@ int main()
 
       shader.use_program();
 
-      char* shift_distance_string = "ffff";
+      std::string* direction = nullptr;
 
       {
          std::lock_guard<std::mutex> lock(g_lock);
 
          if (!g_ring_buffer.empty())
          {
-            shift_distance_string = g_ring_buffer.pop();
+            direction = g_ring_buffer.pop();
          }
       }
 
-      //respond to shift_distance
-      if (!(std::strcmp(shift_distance_string, "ffff") == 0))
+      if (direction->size())
       {
-         float delta = std::atof(shift_distance_string);
+         if ((*direction)[0] == '-')
+         {
+            g_keys[253] = true;
+         }
 
-         g_location[0] += delta;
-
-         glm::mat4 transform;
-         transform = glm::translate(transform, glm::vec3(g_location[0], g_location[1], 0.0f));
-
-         GLint transform_location = glGetUniformLocation(shader.get_program(), "transform");
-         glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(transform));
-
-         shift_distance_string = "ffff";
+         else
+         {
+            g_keys[252] = true;
+         }
       }
 
-      /*if (shift_distance_string > 251 && direction < 256)
+      float delta = 0.0;
+      
+      if (direction)
       {
-         g_keys[direction] = true;
+         std::stringstream parse_string(*direction);
+
+         parse_string >> delta;
       }
 
       // Up
@@ -287,7 +288,7 @@ int main()
       // Right
       if (g_keys[252])
       {
-         g_location[0] += DELTA;
+         g_location[0] += delta;
 
          glm::mat4 transform;
          transform = glm::translate(transform, glm::vec3(g_location[0], g_location[1], 0.0f));
@@ -301,7 +302,7 @@ int main()
       // Left
       if (g_keys[253])
       {
-         g_location[0] -= DELTA;
+         g_location[0] -= delta;
 
          glm::mat4 transform;
          transform = glm::translate(transform, glm::vec3(g_location[0], g_location[1], 0.0f));
@@ -310,7 +311,7 @@ int main()
          glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(transform));
 
          g_keys[253] = false;
-      }*/
+      }
 
       else
       {
