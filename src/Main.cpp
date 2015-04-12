@@ -208,6 +208,9 @@ int main()
       * sizeof(GLfloat)));
    glEnableVertexAttribArray(1);
 
+   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+   glEnableVertexAttribArray(2);
+
    // 4. Unbind VAO (NOT the EBO)
    glBindVertexArray(0);
 
@@ -319,6 +322,7 @@ int main()
          glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(transform));
       }
 
+      glBindTexture(GL_TEXTURE_2D, texture);
       glBindVertexArray(VAO);
       glDrawArrays(GL_TRIANGLES, 0, 3);
       glBindVertexArray(0);
