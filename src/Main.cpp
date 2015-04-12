@@ -150,7 +150,7 @@ GLuint load_texture_from_file(std::string filename)
       }
    }
 
-   return NULL;
+   return texture;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -177,69 +177,81 @@ int main()
          server->start();
    });
 
-      add_call_backs(glfw, window);
+   add_call_backs(glfw, window);
 
-      set_up_glew(WIDTH, HEIGHT);
+   set_up_glew(WIDTH, HEIGHT);
+   //generate texture
+   GLuint texture = load_texture_from_file("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\test_img_small.bmp");
 
-      ev10::eIIe::shader shader("shader.glsl", "color.frag");
-      GLuint shader_program = shader.get_program();
+   //TODO - find a better way to reference these files paths.
+   ev10::eIIe::shader shader("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\shader.glsl", "C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\color.frag");
+   GLuint shader_program = shader.get_program();
 
-      GLuint VAO, VBO;
+   GLuint VAO, VBO;
 
-      glGenVertexArrays(1, &VAO);
-      glGenBuffers(1, &VBO);
-      //glGenBuffers(1, &EBO);
+   glGenVertexArrays(1, &VAO);
+   glGenBuffers(1, &VBO);
+   //glGenBuffers(1, &EBO);
 
-      glBindVertexArray(VAO);
-      // 2. Copy our vertices array in a vertex buffer for OpenGL to use
-      glBindBuffer(GL_ARRAY_BUFFER, VBO);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-      // 3. Copy our index array in a element buffer for OpenGL to use
-      //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-      //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vert_indices), vert_indices, GL_STATIC_DRAW);
-      // 3. Then set the vertex attributes pointers
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
-      glEnableVertexAttribArray(0);
+   glBindVertexArray(VAO);
+   // 2. Copy our vertices array in a vertex buffer for OpenGL to use
+   glBindBuffer(GL_ARRAY_BUFFER, VBO);
+   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+   // 3. Copy our index array in a element buffer for OpenGL to use
+   //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+   //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vert_indices), vert_indices, GL_STATIC_DRAW);
+   // 3. Then set the vertex attributes pointers
+   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+   glEnableVertexAttribArray(0);
 
-      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3
-         * sizeof(GLfloat)));
-      glEnableVertexAttribArray(1);
+   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3
+      * sizeof(GLfloat)));
+   glEnableVertexAttribArray(1);
 
-      // 4. Unbind VAO (NOT the EBO)
-      glBindVertexArray(0);
+   // 4. Unbind VAO (NOT the EBO)
+   glBindVertexArray(0);
 
-      while (!glfwWindowShouldClose(window))
+   while (!glfwWindowShouldClose(window))
+   {
+      glfwPollEvents();
+
+      // Background color 
+      glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      shader.use_program();
+
+      std::string* direction = nullptr;
+
       {
-         glfwPollEvents();
+         std::lock_guard<std::mutex> lock(g_lock);
 
-         // Background color 
-         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-         glClear(GL_COLOR_BUFFER_BIT);
-
-         shader.use_program();
-
-         std::string* direction = nullptr;
-
+         if (!g_ring_buffer.empty())
          {
-            std::lock_guard<std::mutex> lock(g_lock);
+            direction = g_ring_buffer.pop();
+         }
+      }
 
-            if (!g_ring_buffer.empty())
-            {
-               direction = g_ring_buffer.pop();
-            }
+      if (direction->size())
+      {
+         if ((*direction)[0] == '-')
+         {
+            g_keys[253] = true;
          }
 
-         if (direction->size())
+         else
          {
-            if ((*direction)[0] == '-')
-            {
-               g_keys[253] = true;
-            }
+            g_keys[252] = true;
+         }
+      }
 
-            else
-            {
-               g_keys[252] = true;
-            }
+      float delta = 0.0;
+      
+      if (direction)
+      {
+         std::stringstream parse_string(*direction);
+
+         parse_string >> delta;
       }
 
       // Up
@@ -273,7 +285,7 @@ int main()
       // Right
       if (g_keys[252])
       {
-         g_location[0] += DELTA;
+         g_location[0] += delta;
 
          glm::mat4 transform;
          transform = glm::translate(transform, glm::vec3(g_location[0], g_location[1], 0.0f));
@@ -287,7 +299,7 @@ int main()
       // Left
       if (g_keys[253])
       {
-         g_location[0] -= DELTA;
+         g_location[0] -= delta;
 
          glm::mat4 transform;
          transform = glm::translate(transform, glm::vec3(g_location[0], g_location[1], 0.0f));
