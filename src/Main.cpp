@@ -17,6 +17,7 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <sstream>
 
@@ -55,7 +56,7 @@ float g_location[2] = { 0.0 };
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-ev10::eIIe::ring_buffer<char, 1024> g_ring_buffer;
+ev10::eIIe::ring_buffer<std::string*, 1024> g_ring_buffer;
 std::mutex g_lock;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -170,67 +171,75 @@ int main()
       {
          std::lock_guard<std::mutex> lock(g_lock);
 
-         g_ring_buffer.push(input.back());
+         g_ring_buffer.push(new std::string(input.begin(), input.end());
       });
 
-      server->start();
+         server->start();
    });
 
-   add_call_backs(glfw, window);
+      add_call_backs(glfw, window);
 
-   set_up_glew(WIDTH, HEIGHT);
+      set_up_glew(WIDTH, HEIGHT);
 
-   ev10::eIIe::shader shader("shader.glsl", "color.frag");
-   GLuint shader_program = shader.get_program();
+      ev10::eIIe::shader shader("shader.glsl", "color.frag");
+      GLuint shader_program = shader.get_program();
 
-   GLuint VAO, VBO;
+      GLuint VAO, VBO;
 
-   glGenVertexArrays(1, &VAO);
-   glGenBuffers(1, &VBO);
-   //glGenBuffers(1, &EBO);
+      glGenVertexArrays(1, &VAO);
+      glGenBuffers(1, &VBO);
+      //glGenBuffers(1, &EBO);
 
-   glBindVertexArray(VAO);
-   // 2. Copy our vertices array in a vertex buffer for OpenGL to use
-   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-   // 3. Copy our index array in a element buffer for OpenGL to use
-   //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-   //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vert_indices), vert_indices, GL_STATIC_DRAW);
-   // 3. Then set the vertex attributes pointers
-   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
-   glEnableVertexAttribArray(0);
+      glBindVertexArray(VAO);
+      // 2. Copy our vertices array in a vertex buffer for OpenGL to use
+      glBindBuffer(GL_ARRAY_BUFFER, VBO);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+      // 3. Copy our index array in a element buffer for OpenGL to use
+      //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+      //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vert_indices), vert_indices, GL_STATIC_DRAW);
+      // 3. Then set the vertex attributes pointers
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+      glEnableVertexAttribArray(0);
 
-   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 
-      * sizeof(GLfloat)));
-   glEnableVertexAttribArray(1);
+      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3
+         * sizeof(GLfloat)));
+      glEnableVertexAttribArray(1);
 
-   // 4. Unbind VAO (NOT the EBO)
-   glBindVertexArray(0);
+      // 4. Unbind VAO (NOT the EBO)
+      glBindVertexArray(0);
 
-   while (!glfwWindowShouldClose(window))
-   {
-      glfwPollEvents();
-
-      // Background color 
-      glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-      glClear(GL_COLOR_BUFFER_BIT);
-
-      shader.use_program();
-
-      unsigned char direction = 0;
-
+      while (!glfwWindowShouldClose(window))
       {
-         std::lock_guard<std::mutex> lock(g_lock);
+         glfwPollEvents();
 
-         if (!g_ring_buffer.empty())
+         // Background color 
+         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+         glClear(GL_COLOR_BUFFER_BIT);
+
+         shader.use_program();
+
+         std::string* direction = nullptr;
+
          {
-            direction = g_ring_buffer.pop();
-         }
-      }
+            std::lock_guard<std::mutex> lock(g_lock);
 
-      if (direction > 251 && direction < 256)
-      {
-         g_keys[direction] = true;
+            if (!g_ring_buffer.empty())
+            {
+               direction = g_ring_buffer.pop();
+            }
+         }
+
+         if (direction->size())
+         {
+            if ((*direction)[0] == '-')
+            {
+               g_keys[253] = true;
+            }
+
+            else
+            {
+               g_keys[252] = true;
+            }
       }
 
       // Up
