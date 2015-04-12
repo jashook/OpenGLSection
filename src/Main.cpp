@@ -235,7 +235,7 @@ int main()
          }
       }
 
-      if (direction->size())
+      if (direction)
       {
          if ((*direction)[0] == '-')
          {
