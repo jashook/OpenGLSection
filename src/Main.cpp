@@ -53,6 +53,7 @@
 
 bool g_keys[1024] = { 0 };
 float g_location[2] = { 0.0 };
+bool image_should_reset = false;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,6 +76,12 @@ void add_call_backs(glfw_helper& glfw, GLFWwindow* window)
       if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
       {
          glfwSetWindowShouldClose(window, GL_TRUE);
+      }
+
+      //reset image to center
+      if (key == GLFW_KEY_R && action == GLFW_PRESS)
+      {
+         image_should_reset = true;
       }
 
       // On up arrow
@@ -105,7 +112,7 @@ std::string retrieve_file_name()
 GLuint load_texture_from_file(std::string filename)
 {
    //define return variable
-   GLuint texture = -1;
+   GLuint texture;
 
    //strip extension
    std::string extension;
@@ -130,7 +137,7 @@ GLuint load_texture_from_file(std::string filename)
 
          //load .jpg using Cimg
 
-         #define SOIL 0
+         #define SOIL 1
 
          #if SOIL
 
@@ -141,6 +148,17 @@ GLuint load_texture_from_file(std::string filename)
          #else
 
          cimg_library::CImg<unsigned char> src(filename.c_str());
+
+         //TODO - check max texture size vs image size (?) with GLint texSize; glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texSize);
+
+         //set our texture filtering
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+         //set our texture parameters
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+
          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, src.width(), src.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, src.data());
 
          #endif
@@ -202,25 +220,24 @@ int main()
    ev10::eIIe::shader shader("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\include\\shader.glsl", "C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\include\\color.frag");
    GLuint shader_program = shader.get_program();
 
-   GLuint VAO, VBO;
+   GLuint VBO, VAO, EBO;
 
    glGenVertexArrays(1, &VAO);
    glGenBuffers(1, &VBO);
-   //glGenBuffers(1, &EBO);
+   glGenBuffers(1, &EBO);
 
    glBindVertexArray(VAO);
    // 2. Copy our vertices array in a vertex buffer for OpenGL to use
    glBindBuffer(GL_ARRAY_BUFFER, VBO);
    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
    // 3. Copy our index array in a element buffer for OpenGL to use
-   //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-   //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vert_indices), vert_indices, GL_STATIC_DRAW);
+   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vert_indices), vert_indices, GL_STATIC_DRAW);
    // 3. Then set the vertex attributes pointers
-   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
    glEnableVertexAttribArray(0);
 
-   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3
-      * sizeof(GLfloat)));
+   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
    glEnableVertexAttribArray(1);
 
    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
@@ -270,12 +287,14 @@ int main()
          std::stringstream parse_string(*direction);
 
          parse_string >> delta;
+
+         std::cout << "delta: " << std::to_string(delta) << "\r" << std::flush;
       }
 
       // Up
       if (g_keys[GLFW_KEY_UP])
       {
-         g_location[1] += DELTA;
+         g_location[1] -= DELTA;
 
          glm::mat4 transform;
          transform = glm::translate(transform, glm::vec3(g_location[0], g_location[1], 0.0f));
@@ -317,7 +336,7 @@ int main()
       // Left
       if (g_keys[253])
       {
-         g_location[0] -= delta;
+         g_location[0] += delta;
 
          glm::mat4 transform;
          transform = glm::translate(transform, glm::vec3(g_location[0], g_location[1], 0.0f));
@@ -337,9 +356,23 @@ int main()
          glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(transform));
       }
 
+      //check image reset flag (triggered by pressing 'r'?)
+      if (image_should_reset)
+      {
+         g_location[0] = 0.0;
+
+         glm::mat4 transform;
+         transform = glm::translate(transform, glm::vec3(g_location[0], g_location[1], 0.0f));
+
+         GLint transform_location = glGetUniformLocation(shader.get_program(), "transform");
+         glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(transform));
+
+         image_should_reset = false;
+      }
+
       glBindTexture(GL_TEXTURE_2D, texture);
       glBindVertexArray(VAO);
-      glDrawArrays(GL_TRIANGLES, 0, 3);
+      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
       glBindVertexArray(0);
 
       glfwSwapBuffers(window);
@@ -348,10 +381,10 @@ int main()
    // Properly de-allocate all resources once they've outlived their purpose
    glDeleteVertexArrays(1, &VAO);
    glDeleteBuffers(1, &VBO);
+   glDeleteBuffers(1, &EBO);
 
    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
