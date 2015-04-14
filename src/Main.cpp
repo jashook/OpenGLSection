@@ -33,6 +33,7 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
+#include <SOIL.h>
 
 #include "gl_helper.hpp"
 #include "glew_helper.hpp"
@@ -45,8 +46,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-#define WIDTH 1920
-#define HEIGHT 1080
+#define WIDTH 640
+#define HEIGHT 480
 
 #define DELTA .005
 
@@ -128,8 +129,22 @@ GLuint load_texture_from_file(std::string filename)
          glBindTexture(GL_TEXTURE_2D, texture);
 
          //load .jpg using Cimg
+
+         #define SOIL 0
+
+         #if SOIL
+
+         int width, height;
+         unsigned char* image = SOIL_load_image("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\assets\\container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+         
+         #else
+
          cimg_library::CImg<unsigned char> src(filename.c_str());
          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, src.width(), src.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, src.data());
+
+         #endif
+
          glGenerateMipmap(GL_TEXTURE_2D);
 
          //free the CImg
@@ -181,10 +196,10 @@ int main()
 
    set_up_glew(WIDTH, HEIGHT);
    //generate texture
-   GLuint texture = load_texture_from_file("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\test_img_small.bmp");
+   GLuint texture = load_texture_from_file("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\assets\\container.bmp");
 
    //TODO - find a better way to reference these files paths.
-   ev10::eIIe::shader shader("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\shader.glsl", "C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\color.frag");
+   ev10::eIIe::shader shader("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\include\\shader.glsl", "C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\include\\color.frag");
    GLuint shader_program = shader.get_program();
 
    GLuint VAO, VBO;
