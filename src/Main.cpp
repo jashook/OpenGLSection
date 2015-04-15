@@ -20,6 +20,7 @@
 #include <string>
 #include <thread>
 #include <sstream>
+#include <vector>
 
 #include <CImg.h>
 #include <glm/glm.hpp>
@@ -98,13 +99,32 @@ void add_call_backs(glfw_helper& glfw, GLFWwindow* window)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Function: handle_command_line_arguments
+// 
+// Notes: 
+//
+// first index: index of the picture
+// second index: shader location
+// third index: frag location
+//
 ////////////////////////////////////////////////////////////////////////////////
 
-//Retrieves the filename from the settings file?
-std::string retrieve_file_name()
+const std::vector<const std::string* const>* handle_command_line_arguments(int arg_count, const char** arguments)
 {
-   return NULL;
+   if (arg_count != 4)
+   {
+      throw std::runtime_error("Incorrect parameters");
+   }
+
+   auto return_arguments = new std::vector< const std::string* const >();
+
+   return_arguments->push_back(new std::string(arguments[1]));
+   return_arguments->push_back(new std::string(arguments[2]));
+   return_arguments->push_back(new std::string(arguments[3]));
+
+   return return_arguments;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -142,7 +162,7 @@ GLuint load_texture_from_file(std::string filename)
          #if SOIL
 
          int width, height;
-         unsigned char* image = SOIL_load_image("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\assets\\container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+         unsigned char* image = SOIL_load_image(filename.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
          
          #else
@@ -190,8 +210,11 @@ GLuint load_texture_from_file(std::string filename)
 ////////////////////////////////////////////////////////////////////////////////
 
 
-int main()
+int main(int arg_count, const char** arguments)
 {
+   // const std::vector<const std::string* const>
+   auto return_arguments = handle_command_line_arguments(arg_count, arguments);
+
    // Set up and tear down automatically done.
    glfw_helper glfw(GL_FALSE);
 
@@ -214,10 +237,10 @@ int main()
 
    set_up_glew(WIDTH, HEIGHT);
    //generate texture
-   GLuint texture = load_texture_from_file("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\assets\\container.bmp");
+   GLuint texture = load_texture_from_file((*return_arguments)[0]->c_str());
 
    //TODO - find a better way to reference these files paths.
-   ev10::eIIe::shader shader("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\include\\shader.glsl", "C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\include\\color.frag");
+   ev10::eIIe::shader shader((*return_arguments)[1]->c_str(), (*return_arguments)[2]->c_str());
    GLuint shader_program = shader.get_program();
 
    GLuint VBO, VAO, EBO;
