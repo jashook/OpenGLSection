@@ -21,7 +21,6 @@
 #include <thread>
 #include <sstream>
 
-#include <CImg.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -135,22 +134,10 @@ GLuint load_texture_from_file(std::string filename)
          //bind the texture
          glBindTexture(GL_TEXTURE_2D, texture);
 
-         //load .jpg using Cimg
-
-         #define SOIL 1
-
-         #if SOIL
+         //load .jpg using soil
 
          int width, height;
-         unsigned char* image = SOIL_load_image("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\assets\\container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
-         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-         
-         #else
-
-         cimg_library::CImg<unsigned char> src(filename.c_str());
-
-         //TODO - check max texture size vs image size (?) with GLint texSize; glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texSize);
-
+         unsigned char* image = SOIL_load_image("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\test_img_bigEven.jpg", &width, &height, 0, SOIL_LOAD_RGB);
          //set our texture filtering
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -159,9 +146,8 @@ GLuint load_texture_from_file(std::string filename)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
-         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, src.width(), src.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, src.data());
-
-         #endif
+         //load texture
+         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 
          glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -214,10 +200,10 @@ int main()
 
    set_up_glew(WIDTH, HEIGHT);
    //generate texture
-   GLuint texture = load_texture_from_file("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\assets\\container.bmp");
+   GLuint texture = load_texture_from_file("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\assets\\container.bmp");
 
    //TODO - find a better way to reference these files paths.
-   ev10::eIIe::shader shader("C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\include\\shader.glsl", "C:\\Users\\Shook\\Source\\Repos\\OpenGLSection\\include\\color.frag");
+   ev10::eIIe::shader shader("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\shader.glsl", "C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\color.frag");
    GLuint shader_program = shader.get_program();
 
    GLuint VBO, VAO, EBO;
