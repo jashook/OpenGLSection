@@ -20,7 +20,9 @@
 #include <string>
 #include <thread>
 #include <sstream>
+#include <vector>
 
+#include <CImg.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -97,13 +99,32 @@ void add_call_backs(glfw_helper& glfw, GLFWwindow* window)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Function: handle_command_line_arguments
+// 
+// Notes: 
+//
+// first index: index of the picture
+// second index: shader location
+// third index: frag location
+//
 ////////////////////////////////////////////////////////////////////////////////
 
-//Retrieves the filename from the settings file?
-std::string retrieve_file_name()
+const std::vector<const std::string* const>* handle_command_line_arguments(int arg_count, const char** arguments)
 {
-   return NULL;
+   if (arg_count != 4)
+   {
+      throw std::runtime_error("Incorrect parameters");
+   }
+
+   auto return_arguments = new std::vector< const std::string* const >();
+
+   return_arguments->push_back(new std::string(arguments[1]));
+   return_arguments->push_back(new std::string(arguments[2]));
+   return_arguments->push_back(new std::string(arguments[3]));
+
+   return return_arguments;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -134,10 +155,22 @@ GLuint load_texture_from_file(std::string filename)
          //bind the texture
          glBindTexture(GL_TEXTURE_2D, texture);
 
-         //load .jpg using soil
+         //load .jpg using Cimg
+
+         #define SOIL 1
+
+         #if SOIL
 
          int width, height;
-         unsigned char* image = SOIL_load_image("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\test_img_bigEven.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+         unsigned char* image = SOIL_load_image(filename.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+         
+         #else
+
+         cimg_library::CImg<unsigned char> src(filename.c_str());
+
+         //TODO - check max texture size vs image size (?) with GLint texSize; glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texSize);
+
          //set our texture filtering
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -146,8 +179,9 @@ GLuint load_texture_from_file(std::string filename)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
-         //load texture
-         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, src.width(), src.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, src.data());
+
+         #endif
 
          glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -176,8 +210,11 @@ GLuint load_texture_from_file(std::string filename)
 ////////////////////////////////////////////////////////////////////////////////
 
 
-int main()
+int main(int arg_count, const char** arguments)
 {
+   // const std::vector<const std::string* const>
+   auto return_arguments = handle_command_line_arguments(arg_count, arguments);
+
    // Set up and tear down automatically done.
    glfw_helper glfw(GL_FALSE);
 
@@ -200,10 +237,10 @@ int main()
 
    set_up_glew(WIDTH, HEIGHT);
    //generate texture
-   GLuint texture = load_texture_from_file("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\assets\\container.bmp");
+   GLuint texture = load_texture_from_file((*return_arguments)[0]->c_str());
 
    //TODO - find a better way to reference these files paths.
-   ev10::eIIe::shader shader("C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\shader.glsl", "C:\\Users\\Andrew\\Source\\Repos\\OpenGLSection\\include\\color.frag");
+   ev10::eIIe::shader shader((*return_arguments)[1]->c_str(), (*return_arguments)[2]->c_str());
    GLuint shader_program = shader.get_program();
 
    GLuint VBO, VAO, EBO;
