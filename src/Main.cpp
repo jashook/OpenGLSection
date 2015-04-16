@@ -22,7 +22,6 @@
 #include <sstream>
 #include <vector>
 
-#include <CImg.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -155,22 +154,6 @@ GLuint load_texture_from_file(std::string filename)
          //bind the texture
          glBindTexture(GL_TEXTURE_2D, texture);
 
-         //load .jpg using Cimg
-
-         #define SOIL 1
-
-         #if SOIL
-
-         int width, height;
-         unsigned char* image = SOIL_load_image(filename.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-         
-         #else
-
-         cimg_library::CImg<unsigned char> src(filename.c_str());
-
-         //TODO - check max texture size vs image size (?) with GLint texSize; glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texSize);
-
          //set our texture filtering
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -179,13 +162,17 @@ GLuint load_texture_from_file(std::string filename)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
-         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, src.width(), src.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, src.data());
+         //load .jpg using SOIL
+         int width, height;
+         unsigned char* image = SOIL_load_image(filename.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 
-         #endif
+         //generate the texture from image
+         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 
+         //generate mipmaps (openGL scaling objects)
          glGenerateMipmap(GL_TEXTURE_2D);
 
-         //free the CImg
+         //free the texture thing
          glBindTexture(GL_TEXTURE_2D, 0);
 
          if (texture == -1)
